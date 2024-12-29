@@ -18,6 +18,8 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This is a MediaWiki extension, and must be run from within MediaWiki.' );
 }
 
+use MediaWiki\MediaWikiServices;
+
 class SpecialOAuth2Client extends SpecialPage {
 
 	private $_provider;
@@ -134,8 +136,9 @@ class SpecialOAuth2Client extends SpecialPage {
 				$olduser->doLogout();
 		}
 
+	    	$userOptionsManager = MediaWikiServices::getInstance()->getUserOptionsManager();
 		$user = $this->_userHandling( $resourceOwner );
-		$persist = $user->getOption('oauth-persist');
+		$persist = $userOptionsManager->getOption($user, 'oauth-persist');
 		$user->setCookies(null,null,$persist);
 
 		$title = null;
