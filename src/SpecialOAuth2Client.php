@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MediaWiki\Extension\MWEVESSO;
 
 /**
@@ -51,13 +53,6 @@ class SpecialOAuth2Client extends SpecialPage
     private ?string $_clientSecret = null;
 
     /**
-     * The redirect URI
-     *
-     * @var string|null
-     */
-    private ?string $_redirectUri = null;
-
-    /**
      * The allowed corporation IDs
      *
      * @var array
@@ -83,7 +78,6 @@ class SpecialOAuth2Client extends SpecialPage
      *
      * $wgOAuth2Client['client']['id']
      * $wgOAuth2Client['client']['secret']
-     * $wgOAuth2Client['configuration']['redirect_uri']
      * $wgOAuth2Client['configuration']['allowed_alliance_ids']
      * $wgOAuth2Client['configuration']['allowed_corporation_ids']
      * $wgOAuth2Client['configuration']['allowed_character_ids']
@@ -106,9 +100,6 @@ class SpecialOAuth2Client extends SpecialPage
             if (isset($wgOAuth2Client['configuration'])
                 && is_array($wgOAuth2Client['configuration'])
             ) {
-                if (isset($wgOAuth2Client['configuration']['redirect_uri'])) {
-                    $this->_redirectUri = strval($wgOAuth2Client['configuration']['redirect_uri']);
-                }
                 if (isset($wgOAuth2Client['configuration']['allowed_alliance_ids'])
                     && is_array($wgOAuth2Client['configuration']['allowed_alliance_ids'])
                 ) {
@@ -130,7 +121,7 @@ class SpecialOAuth2Client extends SpecialPage
             [
                 'clientId' => $this->_clientId, // The client ID assigned to you by the provider
                 'clientSecret' => $this->_clientSecret, // The client password assigned to you by the provider
-                'redirectUri' => $this->_redirectUri
+                'redirectUri' => Helper::getRedirecUrl()
             ]
         );
     }
@@ -176,9 +167,9 @@ class SpecialOAuth2Client extends SpecialPage
     private function _showError(string $error_msg): void
     {
         $this->getOutput()->setPagetitle(
-            wfMessage('oauth2client-login-header', self::OAUTH_SERVISE_NAME)->text()
+            wfMessage('mwevesso-login-header', self::OAUTH_SERVISE_NAME)->text()
         );
-        $this->getOutput()->addWikiMsg('oauth2client-error', $error_msg);
+        $this->getOutput()->addWikiMsg('mwevesso-error', $error_msg);
     }
 
     /**
@@ -239,7 +230,7 @@ class SpecialOAuth2Client extends SpecialPage
         }
         $userOptionsManager = MediaWikiServices::getInstance()->getUserOptionsManager();
         $user = $this->_userHandling($resourceOwner);
-        $persist = $userOptionsManager->getOption($user, 'oauth-persist');
+        $persist = $userOptionsManager->getOption($user, 'mwevesso-persist');
         $user->setCookies(null, null, boolval($persist));
         $title = null;
         $request->getSession()->persist();
@@ -264,21 +255,21 @@ class SpecialOAuth2Client extends SpecialPage
     private function _default(): void
     {
         $this->getOutput()->setPagetitle(
-            wfMessage('oauth2client-login-header', self::OAUTH_SERVISE_NAME)->text()
+            wfMessage('mwevesso-login-header', self::OAUTH_SERVISE_NAME)->text()
         );
         $user = RequestContext::getMain()->getUser();
         if (!$user->isRegistered()) {
             $this->getOutput()->addWikiMsg(
-                'oauth2client-you-can-login-to-this-wiki-with-oauth2',
+                'mwevesso-you-can-login-to-this-wiki-with-oauth2',
                 self::OAUTH_SERVISE_NAME
             );
             $this->getOutput()->addWikiMsg(
-                'oauth2client-login-with-oauth2',
+                'mwevesso-login-with-oauth2',
                 $this->getPagetitle('redirect')->getPrefixedURL(),
                 self::OAUTH_SERVISE_NAME
             );
         } else {
-            $this->getOutput()->addWikiMsg('oauth2client-youre-already-loggedin');
+            $this->getOutput()->addWikiMsg('mwevesso-youre-already-loggedin');
         }
     }
 
@@ -296,7 +287,11 @@ class SpecialOAuth2Client extends SpecialPage
         if (is_null($characterName)) {
             throw new MWException('Character name is null');
         }
-        if (!in_array($resourceOwner->getAllianceId(), $this->_allowedAllianceIds)
+        $allEmpty = empty($this->_allowedAllianceIds)
+            && empty($this->_allowedCorporationIds)
+            && empty($this->_allowedCharacterIds);
+        if (!$allEmpty
+            && !in_array($resourceOwner->getAllianceId(), $this->_allowedAllianceIds)
             && !in_array($resourceOwner->getCorporationId(), $this->_allowedCorporationIds)
             && !in_array($resourceOwner->getCharacterID(), $this->_allowedCharacterIds)
         ) {

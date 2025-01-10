@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Aliases for Special:OAuth2Client
  *
@@ -10,6 +11,11 @@ $specialPageAliases = [];
 
 /** English (English) */
 $specialPageAliases['en'] = [
+    'OAuth2Client' => ['OAuth2Client'],
+];
+
+/** Russian */
+$specialPageAliases['ru'] = [
     'OAuth2Client' => ['OAuth2Client'],
 ];
 

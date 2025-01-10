@@ -9,7 +9,7 @@
         "[https://github.com/Yeeshani Yeeshani]"
     ],
     "url": "https://www.mediawiki.org/wiki/Extension:OAuth2_Client",
-    "descriptionmsg": "oauth2client-act-as-a-client-to-eve-online-sso",
+    "descriptionmsg": "mwevesso-act-as-a-client-to-eve-online-sso",
     "license-name": "LGPL-3.0",
     "type": "other",
     "AutoloadNamespaces": {
@@ -37,11 +37,11 @@
             "scripts": ["mw.evesso.modal.js"],
             "dependencies": ["mediawiki.util"]
         },
-        "mw.evesso.login": {
-            "styles": ["mw.evesso.login.css"]
+        "mw.evesso.login-white": {
+            "styles": ["mw.evesso.login-white.css"]
         },
-        "mw.evesso.login-page": {
-            "styles": ["mw.evesso.login-page.css"]
+        "mw.evesso.login-black": {
+            "styles": ["mw.evesso.login-black.css"]
         }
     },
     "ResourceFileModulePaths": {

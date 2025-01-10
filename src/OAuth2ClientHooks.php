@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MediaWiki\Extension\MWEVESSO;
 
 /**
@@ -26,7 +28,6 @@ use MediaWiki\Preferences\Hook\GetPreferencesHook;
 use MediaWiki\Request\WebRequest;
 use MediaWiki\SpecialPage\Hook\AuthChangeFormFieldsHook;
 use MediaWiki\Title\Title;
-use Skin;
 
 class OAuth2ClientHooks implements
     AuthChangeFormFieldsHook,
@@ -35,26 +36,24 @@ class OAuth2ClientHooks implements
     SkinTemplateNavigation__UniversalHook
 {
     /**
-     * {@inheritdoc}
+     * The request context
+     *
+     * @var RequestContext|null
      */
-    public function onAuthChangeFormFields(
-        $requests,
-        $fieldInfo,
-        &$formDescriptor,
-        $action
-    ) {
-        $url = "/index.php?title=Special:OAuth2Client/redirect";
-        $ret = $this->_getRequest()->getVal("returnto");
-        if (!is_null($ret)) {
-            $url .= "&returnto=" . $ret;
+    private ?RequestContext $_context = null;
+
+    /**
+     * Get context
+     *
+     * @return RequestContext
+     */
+    private function _getContext(): RequestContext
+    {
+        if (isset($this->_context)) {
+            return $this->_context;
         }
-        $formDescriptor["SSOLogin"] = [
-            "section" => "oauth-login",
-            "type" => "info",
-            "default" => '<div style="text-align: center"><a class = "btn_mwevesso_login" href="' . $url . '">Log in with Eve Online</a></div>',
-            "raw" => true
-        ];
-        $this->_getOutput()->addModules(['mw.evesso.login-page']);
+        $this->_context = RequestContext::getMain();
+        return $this->_context;
     }
 
     /**
@@ -64,7 +63,7 @@ class OAuth2ClientHooks implements
      */
     private function _getRequest(): WebRequest
     {
-        return RequestContext::getMain()->getRequest();
+        return $this->_getContext()->getRequest();
     }
 
     /**
@@ -74,7 +73,51 @@ class OAuth2ClientHooks implements
      */
     private function _getOutput(): OutputPage
     {
-        return RequestContext::getMain()->getOutput();
+        return $this->_getContext()->getOutput();
+    }
+
+    /**
+     * Attach javascript and CSS
+     *
+     * @return void
+     */
+    private function _addModules(): void
+    {
+        global $wgOAuth2Client;
+        $modules = [];
+        // @phpstan-ignore offsetAccess.nonOffsetAccessible, offsetAccess.nonOffsetAccessible
+        if (!empty($wgOAuth2Client['configuration']['theme'])
+            && $wgOAuth2Client['configuration']['theme'] == 'white'
+        ) {
+            $modules[] = 'mw.evesso.login-white';
+        } else {
+            $modules[] = 'mw.evesso.login-black';
+        }
+        // @phpstan-ignore offsetAccess.nonOffsetAccessible, offsetAccess.nonOffsetAccessible
+        if (!empty($wgOAuth2Client['configuration']['modal'])) {
+            $modules[] = 'mw.evesso.modal';
+        }
+        $this->_getOutput()->addModules($modules);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function onAuthChangeFormFields(
+        $requests,
+        $fieldInfo,
+        &$formDescriptor,
+        $action
+    ) {
+        $ret = $this->_getRequest()->getVal("returnto");
+        $url = Helper::getRedirecUrl($ret);
+        $formDescriptor["SSOLogin"] = [
+            "section" => "mwevesso-oauth-login",
+            "type" => "info",
+            "default" => '<div class="mwevesso-login-wrap"><a href="' . $url . '">' . Helper::t('mwevesso-log-in-with-eve-online'). '</a></div>',
+            "raw" => true
+        ];
+        $this->_addModules();
     }
 
     /**
@@ -104,9 +147,9 @@ class OAuth2ClientHooks implements
      */
     public function onGetPreferences($user, &$preferences)
     {
-        $preferences['oauth-persist'] = [
+        $preferences['mwevesso-persist'] = [
             'type' => 'toggle',
-            'label-message' => 'oauth-persist',
+            'label-message' => 'mwevesso-persist',
             'section' => 'misc'
         ];
         return true;
@@ -117,45 +160,36 @@ class OAuth2ClientHooks implements
      */
     public function onSkinTemplateNavigation__Universal($sktemplate, &$links): void
     {
-
         global $wgOAuth2Client;
-
-        $user = RequestContext::getMain()->getUser();
+        // @phpstan-ignore offsetAccess.nonOffsetAccessible, offsetAccess.nonOffsetAccessible
+        if (empty($wgOAuth2Client['configuration']['replace_user_menu'])) {
+            return;
+        }
+        $user = $this->_getContext()->getUser();
         if ($user->isRegistered()) {
             return;
         }
-
         $title = $this->_getRequest()->getVal('title', '');
         if (is_null($title)) {
             $title = '';
         }
         $page = Title::newFromURL($title);
-
-        $inExt = (null == $page || ('OAuth2Client' == substr($page->getText(), 0, 12)) || strstr($page->getText(), 'Logout'));
-        /** @var array<string,array> $links */
-        $links['user-menu']['anon_oauth_login'] = [ // @phpstan-ignore missingType.iterableValue
-            'text' => 'LOG IN with EVE Online',
-            'class' => 'btn_mwevesso_login',
-            'active' => false
-        ];
-        if ($inExt) {
-            // @phpstan-ignore offsetAccess.nonOffsetAccessible
-            $links['user-menu']['anon_oauth_login']['href'] = Skin::makeSpecialUrlSubpage('OAuth2Client', 'redirect');
+        if (is_null($page) || $page->isSpecialPage()) {
+            $returnto = null;
         } else {
-            // @phpstan-ignore offsetAccess.nonOffsetAccessible
-            $links['user-menu']['anon_oauth_login']['href'] = Skin::makeSpecialUrlSubpage(
-                'OAuth2Client',
-                'redirect',
-                wfArrayToCGI(['returnto' => $page])
-            );
+            $returnto = (string) $page;
         }
-        $this->_getOutput()->addModules(['mw.evesso.login', 'mw.evesso.modal']);
-        // Remove default login links
-        unset($links['user-menu']['login']);
-        unset($links['user-menu']['anonlogin']);
-
-        // Remove account creation link
-        unset($links['user-menu']['createaccount']);
+        /** @var array $links */
+        $links['user-menu'] = [ // @phpstan-ignore missingType.iterableValue
+            'mwevesso_login' => [
+                'single-id' => 'pt-mwevesso-login',
+                'text' => Helper::t('mwevesso-log-in-with-eve-online'),
+                'class' => 'mwevesso-login-wrap',
+                'active' => false,
+                'href' => Helper::getRedirecUrl($returnto)
+            ]
+        ];
+        $this->_addModules();
     }
 
 }
