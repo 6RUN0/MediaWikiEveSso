@@ -1,4 +1,6 @@
 {
+    "mwevesso-admin-callback-url-label": "URL-адрес обратного вызова для EVE SSO:",
+    "mwevesso-admin-show-wgoauth2client-label": "Дамп конфигурации:",
     "mwevesso-error": "'''Ошибка''':$1",
     "mwevesso-log-in-with-eve-online": "Войти через Eve Online",
     "mwevesso-login-header": "Вход $1",

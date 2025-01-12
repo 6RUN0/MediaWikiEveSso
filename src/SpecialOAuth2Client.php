@@ -52,6 +52,14 @@ class SpecialOAuth2Client extends SpecialPage
      */
     private ?string $_clientSecret = null;
 
+
+    /**
+     * The callback URL
+     *
+     * @var string
+     */
+    private string $_callbackUrl;
+
     /**
      * The allowed corporation IDs
      *
@@ -117,11 +125,12 @@ class SpecialOAuth2Client extends SpecialPage
                 }
             }
         }
+        $this->_callbackUrl = Helper::getCallbackUrl();
         $this->_provider = new EveOnlineSSOProvider(
             [
                 'clientId' => $this->_clientId, // The client ID assigned to you by the provider
                 'clientSecret' => $this->_clientSecret, // The client password assigned to you by the provider
-                'redirectUri' => Helper::getRedirecUrl()
+                'redirectUri' => $this->_callbackUrl
             ]
         );
     }
@@ -269,7 +278,36 @@ class SpecialOAuth2Client extends SpecialPage
                 self::OAUTH_SERVISE_NAME
             );
         } else {
-            $this->getOutput()->addWikiMsg('mwevesso-youre-already-loggedin');
+            $userGroupManager = MediaWikiServices::getInstance()->getUserGroupManager();
+            if (in_array('sysop', $userGroupManager->getUserGroups($user))) {
+                global $wgOAuth2Client;
+                $config = $wgOAuth2Client;
+                if (is_array($config)) {
+                    $config['client'] = [
+                        'id' => '*******',
+                        'secret' => '*******'
+                    ];
+                }
+                $this->getOutput()->addWikiMsg(
+                    'mwevesso-admin-callback-url-label'
+                );
+                $this->getOutput()->addWikiTextAsInterface(
+                    '<syntaxhighlight>' .
+                    $this->_callbackUrl .
+                    '</syntaxhighlight>'
+                );
+                $this->getOutput()->addWikiMsg(
+                    'mwevesso-admin-show-wgoauth2client-label'
+                );
+                $this->getOutput()->addWikiTextAsInterface(
+                    '<syntaxhighlight lang="php">' .
+                    '$wgOAuth2Client = ' .
+                    var_export($config, true) .
+                    '</syntaxhighlight>'
+                );
+            } else {
+                $this->getOutput()->addWikiMsg('mwevesso-youre-already-loggedin');
+            }
         }
     }
 
@@ -315,7 +353,6 @@ class SpecialOAuth2Client extends SpecialPage
         $request = $this->getRequest();
         $request->getSession()->setSecret("hugs", time());
         $request->getSession()->persist();
-        //$this->getContext()->setUser($user);
         RequestContext::getMain()->setUser($user);
         $user->saveSettings();
         // why are these 2 lines here, they seem to do nothing helpful ?

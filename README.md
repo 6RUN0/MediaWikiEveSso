@@ -20,7 +20,9 @@ cd /path/to/mediawiki
 Clone this repo into a `extensions/MW-EVE-SSO`:
 
 ```bash
-git clone --depth 1 --branch "master" --single-branch "https://github.com/6RUN0/MediaWikiEveSso.git" "extensions/MW-EVE-SSO"
+git clone --depth 1 --branch "master" --single-branch \
+  "https://github.com/6RUN0/MediaWikiEveSso.git" \
+  "extensions/MW-EVE-SSO"
 ```
 
 Move the `composer.local.json-sample` file to `composer.local.json`
@@ -53,8 +55,10 @@ Required settings to be added to `LocalSettings.php`
 You can get a client ID and Secret by registering an SSO Application for your wiki on the [EVE Developers](https://developers.eveonline.com/) site
 
 ```php
-$wgOAuth2Client['client']['id']     = ''; // The client ID assigned to you by the provider
-$wgOAuth2Client['client']['secret'] = ''; // The client secret assigned to you by the provider
+// The client ID assigned to you by the provider
+$wgOAuth2Client['client']['id']     = '';
+// The client secret assigned to you by the provider
+$wgOAuth2Client['client']['secret'] = '';
 ```
 
 The **Redirect URI** for your wiki should be:
@@ -66,9 +70,12 @@ http://your.wiki.domain/path/to/wiki/Special:OAuth2Client/callback
 Configure which EVE characters are allowed to log in
 
 ```php
-$wgOAuth2Client['configuration']['allowed_alliance_ids'] = []; // All members of these alliances will be able to log in
-$wgOAuth2Client['configuration']['allowed_character_ids'] = []; // Specify specific characters here
-$wgOAuth2Client['configuration']['allowed_corporation_ids'] = []; // All members of these corporations will be abe to log in
+// All members of these alliances will be able to log in
+$wgOAuth2Client['configuration']['allowed_alliance_ids'] = [];
+// Specify specific characters here
+$wgOAuth2Client['configuration']['allowed_character_ids'] = [];
+// All members of these corporations will be abe to log in
+$wgOAuth2Client['configuration']['allowed_corporation_ids'] = [];
 ```
 
 You can replace the login menu with a login button via EVE SSO

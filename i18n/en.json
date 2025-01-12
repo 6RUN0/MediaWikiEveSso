@@ -1,4 +1,6 @@
 {
+    "mwevesso-admin-callback-url-label": "The callback URL for the EVE SSO:",
+    "mwevesso-admin-show-wgoauth2client-label": "Configuration dump:",
     "mwevesso-error": "'''Error''':$1",
     "mwevesso-log-in-with-eve-online": "Log in with Eve Online",
     "mwevesso-login-header": "$1 login",
