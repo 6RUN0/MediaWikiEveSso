@@ -8,5 +8,6 @@
     "mwevesso-oauth-login": "Войти через EVE SSO",
     "mwevesso-persist": "Сохранить вход через Eve SSO (Необходимо выйти и войти снова, чтобы изменения вступили в силу)",
     "mwevesso-you-can-login-to-this-wiki-with-oauth2": "Вы можете войти в эту вики, используя свою учетную запись $1",
-    "mwevesso-youre-already-loggedin": "Вы уже вошли в систему."
+    "mwevesso-youre-already-loggedin": "Вы уже вошли в систему.",
+    "oauth2client": "MediaWiki EVE SSO"
 }

@@ -51,5 +51,24 @@
     "MessagesDirs": {
         "MyExtension": ["i18n"]
     },
+    "config": {
+        "OAuth2Client": {
+            "value": {
+                "client": {
+                    "id": "",
+                    "secret": ""
+                },
+                "configuration": {
+                    "allowed_alliance_ids": [],
+                    "allowed_character_ids": [],
+                    "allowed_corporation_ids": [],
+                    "replace_user_menu": false,
+                    "theme": "black",
+                    "modal": false
+                }
+            },
+            "merge_strategy": "array_plus_2d"
+        }
+    },
     "manifest_version": 2
 }
